@@ -1,9 +1,15 @@
 const express = require("express")
-const router = require('./routes/url')
-const staticRouter = require('./routes/staticRouter')
+
 const URL = require('./models/url')
 const {connectMongoDB} = require('./connect.js')
 const path = require('path')
+const cookieParser = require('cookie-parser')
+
+const { restrictToLoggedInUserOnly, checkAuth } = require("./middlewares/auth.js")
+const router = require('./routes/url')
+const staticRouter = require('./routes/staticRouter')
+const authRouter = require('./routes/user')
+
 
 const app = express();
 const port = 8001;
@@ -18,6 +24,8 @@ app.set('views', path.resolve("./views"));
 
 app.use(express.json())
 app.use(express.urlencoded({extended: false}))
+app.use(cookieParser())
+// app.use(restrictToLoggedInUserOnly) // but only for particular route so
 
 
 // app.get('/test', async (req,res) => {
@@ -42,8 +50,9 @@ app.use(express.urlencoded({extended: false}))
 //     });
 // })
 
-app.use("/url", router);
-app.use("/", staticRouter);
+app.use("/url",restrictToLoggedInUserOnly, router); // inline middleware
+app.use("/", checkAuth,staticRouter);
+app.use("/user", authRouter);
 
 
 app.listen(port, () => console.log(`Server started at port: ${port}.`));
