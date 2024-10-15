@@ -5,7 +5,9 @@ const {connectMongoDB} = require('./connect.js')
 const path = require('path')
 const cookieParser = require('cookie-parser')
 
-const { restrictToLoggedInUserOnly, checkAuth } = require("./middlewares/auth.js")
+// const { restrictToLoggedInUserOnly, checkAuth } = require("./middlewares/auth.js")
+const { checkForAuthentication, restrictTo } = require("./middlewares/auth.js")
+
 const router = require('./routes/url')
 const staticRouter = require('./routes/staticRouter')
 const authRouter = require('./routes/user')
@@ -25,6 +27,7 @@ app.set('views', path.resolve("./views"));
 app.use(express.json())
 app.use(express.urlencoded({extended: false}))
 app.use(cookieParser())
+app.use(checkForAuthentication)
 // app.use(restrictToLoggedInUserOnly) // but only for particular route so
 
 
@@ -50,8 +53,10 @@ app.use(cookieParser())
 //     });
 // })
 
-app.use("/url",restrictToLoggedInUserOnly, router); // inline middleware
-app.use("/", checkAuth,staticRouter);
+// app.use("/url",restrictToLoggedInUserOnly, router); // inline middleware
+// app.use("/", checkAuth,staticRouter);
+app.use("/url",restrictTo(['NORMAL','ADMIN']), router); // inline middleware
+app.use("/",staticRouter);
 app.use("/user", authRouter);
 
 
